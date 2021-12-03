@@ -1752,11 +1752,16 @@ static const zend_function_entry signalfx_tracing_functions[] = {
     DDTRACE_SUB_NS_FE("Testing\\", trigger_error, arginfo_ddtrace_testing_trigger_error),
     DDTRACE_FE_END};
 
-zend_module_entry signalfx_tracing_module_entry = {
-    STANDARD_MODULE_HEADER,  PHP_DDTRACE_EXTNAME,          signalfx_tracing_functions,      PHP_MINIT(signalfx_tracing),
-    PHP_MSHUTDOWN(signalfx_tracing),  PHP_RINIT(signalfx_tracing),           PHP_RSHUTDOWN(signalfx_tracing), PHP_MINFO(signalfx_tracing),
-    PHP_DDTRACE_VERSION,     PHP_MODULE_GLOBALS(signalfx_tracing),  PHP_GINIT(signalfx_tracing),     NULL,
-    ddtrace_post_deactivate, STANDARD_MODULE_PROPERTIES_EX};
+static const zend_module_dep ddtrace_module_deps[] = {ZEND_MOD_REQUIRED("json") ZEND_MOD_END};
+
+zend_module_entry signalfx_tracing_module_entry = {STANDARD_MODULE_HEADER_EX, NULL,
+                                          ddtrace_module_deps,       PHP_DDTRACE_EXTNAME,
+                                          signalfx_tracing_functions,         PHP_MINIT(signalfx_tracing),
+                                          PHP_MSHUTDOWN(signalfx_tracing),    PHP_RINIT(signalfx_tracing),
+                                          PHP_RSHUTDOWN(signalfx_tracing),    PHP_MINFO(signalfx_tracing),
+                                          PHP_DDTRACE_VERSION,       PHP_MODULE_GLOBALS(signalfx_tracing),
+                                          PHP_GINIT(signalfx_tracing),        NULL,
+                                          ddtrace_post_deactivate,   STANDARD_MODULE_PROPERTIES_EX};
 
 #ifdef COMPILE_DL_SIGNALFX_TRACING
 ZEND_GET_MODULE(signalfx_tracing)
