@@ -55,6 +55,13 @@ atomic_int ddtrace_warn_legacy_api;
 
 ZEND_DECLARE_MODULE_GLOBALS(signalfx_tracing)
 
+#ifdef COMPILE_DL_DDTRACE
+ZEND_GET_MODULE(signalfx_tracing)
+#if defined(ZTS) && PHP_VERSION_ID >= 70000
+ZEND_TSRMLS_CACHE_DEFINE();
+#endif
+#endif
+
 PHP_INI_BEGIN()
 STD_PHP_INI_BOOLEAN("ddtrace.disable", "0", PHP_INI_SYSTEM, OnUpdateBool, disable, zend_signalfx_tracing_globals,
                     signalfx_tracing_globals)
@@ -458,7 +465,8 @@ static PHP_MINIT_FUNCTION(signalfx_tracing) {
      * {{{ */
     Dl_info infos;
     zend_register_extension(&_dd_zend_extension_entry, signalfx_tracing_module_entry.handle);
-    dladdr(ZEND_MODULE_STARTUP_N(signalfx_tracing), &infos);
+    // The symbol used needs to be public on Alpine.
+    dladdr(get_module, &infos);
     dlopen(infos.dli_fname, RTLD_LAZY);
     /* }}} */
 
@@ -1838,13 +1846,6 @@ zend_module_entry signalfx_tracing_module_entry = {STANDARD_MODULE_HEADER_EX, NU
                                           PHP_DDTRACE_VERSION,       PHP_MODULE_GLOBALS(signalfx_tracing),
                                           PHP_GINIT(signalfx_tracing),        NULL,
                                           ddtrace_post_deactivate,   STANDARD_MODULE_PROPERTIES_EX};
-
-#ifdef COMPILE_DL_SIGNALFX_TRACING
-ZEND_GET_MODULE(signalfx_tracing)
-#if defined(ZTS) && PHP_VERSION_ID >= 70000
-ZEND_TSRMLS_CACHE_DEFINE();
-#endif
-#endif
 
 // the following operations are performed in order to put the tracer in a state when a new trace can be started:
 //   - set a new trace (group) id
