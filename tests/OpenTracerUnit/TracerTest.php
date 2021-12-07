@@ -1,9 +1,9 @@
 <?php
 
-namespace DDTrace\Tests\OpenTracer1Unit;
+namespace DDTrace\Tests\OpenTracerUnit;
 
-use DDTrace\OpenTracer1\SpanContext;
-use DDTrace\OpenTracer1\Tracer;
+use DDTrace\OpenTracer\SpanContext;
+use DDTrace\OpenTracer\Tracer;
 use DDTrace\Sampling\PrioritySampling;
 use DDTrace\SpanContext as DDSpanContext;
 use DDTrace\Tag;
@@ -27,12 +27,19 @@ final class TracerTest extends BaseTestCase
     protected function ddSetUp()
     {
         \dd_trace_serialize_closed_spans();
+        self::putEnv("DD_TRACE_GENERATE_ROOT_SPAN=0");
         parent::ddSetUp();
+    }
+
+    protected function ddTearDown()
+    {
+        self::putEnv("DD_TRACE_GENERATE_ROOT_SPAN=");
+        parent::ddTearDown();
     }
 
     public function testTracerNoConstructorArg()
     {
-        $tracer = new Tracer();
+        $tracer = new Tracer(); //  Tracer::make(new NoopTransport());
 
         $span = $tracer->startSpan(self::OPERATION_NAME)->unwrapped();
         $this->assertNull($span->getTag(Tag::ENV));
@@ -84,7 +91,6 @@ final class TracerTest extends BaseTestCase
     public function testCreateSpanWithExpectedValues()
     {
         $tracer = Tracer::make(new NoopTransport());
-        $rootSpan = $tracer->startSpan("rootSpan");
         $startTime = Time::now();
         $span = $tracer
             ->startSpan(self::OPERATION_NAME, [
@@ -92,7 +98,6 @@ final class TracerTest extends BaseTestCase
                     self::TAG_KEY => self::TAG_VALUE
                 ],
                 'start_time' => $startTime,
-                'child_of' => $rootSpan->unwrapped(),
             ])
             ->unwrapped();
 
@@ -211,15 +216,14 @@ JSON;
         $B = $tracer->startActiveSpan('B', ['child_of' => $context]);
 
         $otcontext = $B->getSpan()->getContext();
-        self::assertInstanceOf('DDTrace\OpenTracer1\SpanContext', $otcontext);
-        self::assertEquals('2409624703365403319', $otcontext->unwrapped()->getTraceId());
+        self::assertInstanceOf('DDTrace\OpenTracer\SpanContext', $otcontext);
+        self::assertEquals('2409624703365403319', $otcontext->unwrapped()->getParentId());
     }
 
     public function testOTStartSpanOptions()
     {
         GlobalTracer::set(Tracer::make());
         $tracer = GlobalTracer::get();
-        $tracer->startActiveSpan('dummy-root');
 
         $now = time();
         $scope = $tracer->startActiveSpan(
@@ -232,7 +236,7 @@ JSON;
                 'start_time' => $now,
             ])
         );
-        self::assertInstanceOf('DDTrace\OpenTracer1\Scope', $scope);
+        self::assertInstanceOf('DDTrace\OpenTracer\Scope', $scope);
         $scope = $scope->unwrapped();
         $span = $scope->getSpan();
         self::assertSame(\OpenTracing\Tags\SPAN_KIND_MESSAGE_BUS_PRODUCER, $span->getTag(\OpenTracing\Tags\SPAN_KIND));
@@ -292,8 +296,6 @@ JSON;
 
     public function testUnfinishedSpansAreNotSentOnFlush()
     {
-        dd_trace_serialize_closed_spans();
-
         $transport = new DebugTransport();
         $tracer = Tracer::make($transport);
         $tracer->startActiveSpan('root');
