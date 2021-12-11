@@ -107,7 +107,7 @@ class GuzzleIntegration extends Integration
                 $span->service = Urls::hostnameForTag($url);
             }
             $span->meta[Tag::HTTP_METHOD] = $request->getMethod();
-            $span->meta[Tag::HTTP_URL] = Urls::sanitize($url);
+            $span->meta[Tag::HTTP_URL] = \DDTrace\Private_\util_url_sanitize($url);
         } elseif (\is_a($request, 'GuzzleHttp\Message\RequestInterface')) {
             /** @var \GuzzleHttp\Message\RequestInterface $request */
             $url = $request->getUrl();
@@ -115,7 +115,7 @@ class GuzzleIntegration extends Integration
                 $span->service = Urls::hostnameForTag($url);
             }
             $span->meta[Tag::HTTP_METHOD] = $request->getMethod();
-            $span->meta[Tag::HTTP_URL] = Urls::sanitize($url);
+            $span->meta[Tag::HTTP_URL] = \DDTrace\Private_\util_url_sanitize($url);
         }
     }
 }
