@@ -673,7 +673,7 @@ final class CurlIntegrationTest extends IntegrationTestCase
                     'component' => 'web.request',
                 ])
                 ->withExistingTagsNames(['http.method', 'http.url', 'http.status_code'])
-                ->withExactMetrics(['_sampling_priority_v1' => 1, '_dd.rule_psr' => 1])
+                ->withExactMetrics(['_sampling_priority_v1' => 1])
                 ->withChildren([
                     SpanAssertion::build(
                         'curl_exec',
