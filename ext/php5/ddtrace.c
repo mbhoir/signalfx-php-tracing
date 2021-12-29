@@ -822,7 +822,9 @@ static PHP_MINFO_FUNCTION(signalfx_tracing) {
     _dd_info_tracer_config();
     php_info_print_table_end();
 
-    _dd_info_diagnostics_table(TSRMLS_C);
+    if (!DDTRACE_G(disable)) {
+        _dd_info_diagnostics_table(TSRMLS_C);
+    }
 
     DISPLAY_INI_ENTRIES();
 }
