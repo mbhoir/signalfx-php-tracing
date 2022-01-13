@@ -3,7 +3,6 @@
 namespace DDTrace\Integrations\CakePHP;
 
 use CakeRequest;
-use DDTrace\GlobalTracer;
 use DDTrace\Integrations\Integration;
 use DDTrace\SpanData;
 use DDTrace\Tag;
@@ -40,23 +39,22 @@ class CakePHPIntegration extends Integration
                 return false;
             }
 
-            $scope = GlobalTracer::get()->getRootScope();
-            if (!$scope) {
+            $rootSpan = \DDTrace\root_span();
+            if (!$rootSpan) {
                 return false;
             }
+
             $integration->appName = \ddtrace_config_app_name(CakePHPIntegration::NAME);
-            $integration->rootSpan = $scope->getSpan();
-            $integration->addTraceAnalyticsIfEnabledLegacy($integration->rootSpan);
-            $integration->rootSpan->setTag(Tag::COMPONENT, 'cakephp');
-            $integration->rootSpan->setTag(Tag::SERVICE_NAME, $integration->appName);
+            $integration->rootSpan = $rootSpan;
+            $integration->addTraceAnalyticsIfEnabled($integration->rootSpan);
+            $integration->rootSpan->meta[Tag::COMPONENT] = 'cakephp';
+            $integration->rootSpan->service = $integration->appName;
             if ('cli' === PHP_SAPI) {
-                $integration->rootSpan->overwriteOperationName('cakephp.console');
-                $integration->rootSpan->setTag(
-                    Tag::RESOURCE_NAME,
-                    !empty($_SERVER['argv'][1]) ? 'cake_console ' . $_SERVER['argv'][1] : 'cake_console'
-                );
+                $integration->rootSpan->name = 'cakephp.console';
+                $integration->rootSpan->resource =
+                    !empty($_SERVER['argv'][1]) ? 'cake_console ' . $_SERVER['argv'][1] : 'cake_console';
             } else {
-                $integration->rootSpan->overwriteOperationName('cakephp.request');
+                $integration->rootSpan->name = 'cakephp.request';
             }
 
             \DDTrace\trace_method(
@@ -73,15 +71,13 @@ class CakePHPIntegration extends Integration
                         return;
                     }
 
-                    $integration->rootSpan->setTag(
-                        Tag::RESOURCE_NAME,
-                        $_SERVER['REQUEST_METHOD'] . ' ' . $this->name . 'Controller@' . $request->params['action']
-                    );
-                    $integration->rootSpan->setTag(Tag::HTTP_URL, Router::url($request->here, true));
-                    $integration->rootSpan->setTag('cakephp.route.controller', $request->params['controller']);
-                    $integration->rootSpan->setTag('cakephp.route.action', $request->params['action']);
+                    $integration->rootSpan->resource =
+                        $_SERVER['REQUEST_METHOD'] . ' ' . $this->name . 'Controller@' . $request->params['action'];
+                    $integration->rootSpan->meta[Tag::HTTP_URL] = Router::url($request->here, true);
+                    $integration->rootSpan->meta['cakephp.route.controller'] = $request->params['controller'];
+                    $integration->rootSpan->meta['cakephp.route.action'] = $request->params['action'];
                     if (isset($request->params['plugin'])) {
-                        $integration->rootSpan->setTag('cakephp.plugin', $request->params['plugin']);
+                        $integration->rootSpan->meta['cakephp.plugin'] = $request->params['plugin'];
                     }
                 }
             );
@@ -96,7 +92,7 @@ class CakePHPIntegration extends Integration
             \DDTrace\trace_method('ExceptionRenderer', '__construct', [
                 'instrument_when_limited' => 1,
                 'posthook' => function (SpanData $span, array $args) use ($integration) {
-                    $integration->rootSpan->setError($args[0]);
+                    $integration->setError($integration->rootSpan, $args[0]);
                     return false;
                 },
             ]);
@@ -104,7 +100,7 @@ class CakePHPIntegration extends Integration
             \DDTrace\trace_method('CakeResponse', 'statusCode', [
                 'instrument_when_limited' => 1,
                 'posthook' => function (SpanData $span, $args, $return) use ($integration) {
-                    $integration->rootSpan->setTag(Tag::HTTP_STATUS_CODE, $return);
+                    $integration->rootSpan->meta[Tag::HTTP_STATUS_CODE] = $return;
                     return false;
                 },
             ]);
