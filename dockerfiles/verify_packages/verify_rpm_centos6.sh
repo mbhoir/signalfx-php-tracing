@@ -23,6 +23,6 @@ for phpVer in $(ls ${PHP_INSTALL_DIR}); do
         rm -f /opt/signalfx_php_tracing/etc/ddtrace.ini
     else
         echo "Installing signalfx-php-tracing using the new PHP installer"
-        php /build_src/dd-library-php-setup.php --file /build_src/build/packages/dd-library-php-x86_64-linux-musl.tar.gz --php-bin all
+        php /build_src/datadog-setup.php --file /build_src/build/packages/dd-library-php-x86_64-linux-musl.tar.gz --php-bin all
     fi
 done
