@@ -177,14 +177,18 @@ trait TracerTestTrait
     /**
      * This method executes a single script with the provided configuration.
      */
-    public function inCli($scriptPath, $customEnvs = [], $customInis = [], $arguments = '')
+    public function inCli($scriptPath, $customEnvs = [], $customInis = [], $arguments = '', $withOutput = false)
     {
         $this->resetRequestDumper();
-        $this->executeCli($scriptPath, $customEnvs, $customInis, $arguments);
-        return $this->parseTracesFromDumpedData();
+        $output = $this->executeCli($scriptPath, $customEnvs, $customInis, $arguments, $withOutput);
+        $out = [$this->parseTracesFromDumpedData()];
+        if ($withOutput) {
+            $out[] = $output;
+        }
+        return $out;
     }
 
-    public function executeCli($scriptPath, $customEnvs = [], $customInis = [], $arguments = '')
+    public function executeCli($scriptPath, $customEnvs = [], $customInis = [], $arguments = '', $withOutput = false)
     {
         $envs = (string) new EnvSerializer(array_merge(
             [
@@ -208,7 +212,11 @@ trait TracerTestTrait
         $script = escapeshellarg($scriptPath);
         $arguments = escapeshellarg($arguments);
         $commandToExecute = "$envs php $inis $script $arguments";
-        `$commandToExecute`;
+        if ($withOutput) {
+            return (string) `$commandToExecute 2>&1`;
+        } else {
+            `$commandToExecute`;
+        }
     }
 
     /**
