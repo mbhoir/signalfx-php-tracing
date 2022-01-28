@@ -780,6 +780,7 @@ TEST_INTEGRATIONS_81 := \
 TEST_WEB_81 := \
 	test_metrics \
 	test_web_codeigniter_22 \
+	test_web_laravel_8x \
 	test_web_nette_24 \
 	test_web_nette_30 \
 	test_web_slim_312 \
@@ -787,7 +788,6 @@ TEST_WEB_81 := \
 	test_web_symfony_52 \
 	test_web_custom
 #	test_web_yii_2 \
-#	test_web_laravel_8x \
 
 FILTER := .
 
