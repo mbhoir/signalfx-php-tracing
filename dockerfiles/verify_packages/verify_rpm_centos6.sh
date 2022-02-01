@@ -15,7 +15,7 @@ for phpVer in $(ls ${PHP_INSTALL_DIR}); do
     INSTALL_TYPE="${INSTALL_TYPE:-php_installer}"
     if [ "$INSTALL_TYPE" = "native_package" ]; then
         echo "Installing dd-trace-php using the OS-specific package installer"
-        rpm -Uvh /build_src/build/packages/*.rpm
+        rpm -Uvh build/packages/*.rpm
         php --ri=signalfx_tracing
 
         # Uninstall the tracer
@@ -23,6 +23,7 @@ for phpVer in $(ls ${PHP_INSTALL_DIR}); do
         rm -f /opt/signalfx_php_tracing/etc/ddtrace.ini
     else
         echo "Installing signalfx-php-tracing using the new PHP installer"
-        php /build_src/datadog-setup.php --file /build_src/build/packages/dd-library-php-x86_64-linux-musl.tar.gz --php-bin all
+        installable_bundle=$(find "build/packages" -maxdepth 1 -name 'dd-library-php-*-x86_64-linux-gnu.tar.gz')
+        php datadog-setup.php --file "$installable_bundle" --php-bin all
     fi
 done
