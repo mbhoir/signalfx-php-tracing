@@ -74,7 +74,7 @@ STD_PHP_INI_ENTRY("ddtrace.cgroup_file", "/proc/self/cgroup", PHP_INI_SYSTEM, On
                   zend_signalfx_tracing_globals, signalfx_tracing_globals)
 PHP_INI_END()
 
-static int ddtrace_startup(struct _zend_extension *extension) {
+static int ddtrace_startup(zend_extension *extension) {
     UNUSED(extension);
     ddtrace_resource = zend_get_resource_handle(PHP_DDTRACE_EXTNAME);
     ddtrace_op_array_extension = zend_get_op_array_extension_handle(PHP_DDTRACE_EXTNAME);
@@ -83,7 +83,7 @@ static int ddtrace_startup(struct _zend_extension *extension) {
     // We deliberately leave handler replacement during startup, even though this uses some config
     // This touches global state, which, while unlikely, may play badly when interacting with other extensions, if done
     // post-startup
-    ddtrace_internal_handlers_startup();
+    ddtrace_internal_handlers_startup(extension);
     return SUCCESS;
 }
 
@@ -105,7 +105,7 @@ static zend_extension _dd_zend_extension_entry = {"ddtrace",
                                                   signalfx_tracing_shutdown,
                                                   signalfx_tracing_activate,
                                                   signalfx_tracing_deactivate,
-                                                  NULL,
+                                                  ddtrace_message_handler,
                                                   NULL,
                                                   NULL,
                                                   NULL,
