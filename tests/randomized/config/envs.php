@@ -4,16 +4,19 @@
 // the ENVS array.
 const DEFAULT_ENVS = [
     'DD_AGENT_HOST' => 'agent',
+    'DD_ENV' => 'some_env',
+    'DD_SERVICE' => 'my_custom_service',
+    'DD_TRACE_CLI_ENABLED' => 'true',
 ];
 
 // Values from this array might be selected and set. When an environment variable from this list is selected,
 // then there is an equal probability that any of the assigned values from this array can be set.
 const ENVS = [
-    'DD_ENV' => ['some_env'],
-    'SIGNALFX_SERVICE' => ['my_custom_service'],
+    'DD_ENV' => [null],
+    'SIGNALFX_SERVICE' => [null],
     'SIGNALFX_TRACING_ENABLED' => ['false'],
+    'SIGNALFX_TRACING_CLI_ENABLED' => ['false'],
     'SIGNALFX_TRACE_DEBUG' => ['true'],
-    'SIGNALFX_DISTRIBUTED_TRACING' => ['false'],
     'DD_AGENT_HOST' => [null, 'wrong_host'],
     'DD_TRACE_AGENT_PORT' => ['9999'],
     'DD_AUTOFINISH_SPANS' => ['true'],
